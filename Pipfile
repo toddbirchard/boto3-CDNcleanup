@@ -5,9 +5,7 @@ name = "pypi"
 
 [packages]
 boto3="*"
-botocore="*"
-python-resize-image="*"
-webp="*"
+Pillow="*"
 
 [dev-packages]
 python-dotenv="*"

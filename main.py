@@ -3,7 +3,7 @@ import json
 import boto3
 from botocore.client import Config
 from urllib.parse import unquote
-from resizeimage import resizeimage
+from PIL import Image
 
 # Initialize a session using DigitalOcean Spaces.
 session = boto3.session.Session()
@@ -18,7 +18,7 @@ def get_folders():
     """Retrieve all folders underneath the specified directory.
 
     1. Set our bucket name.
-    2. Specify a delimitr, AKA a character that all the files we're target have in common.
+    2. Specify a delimiter, (a character that the files we're targeting have in common).
     3. Set folder path to objects as "Prefix".
     4. Create list of all recursively discovered folder names.
     5. Return list of folders.
@@ -59,7 +59,12 @@ def get_objects_in_folder(folderpath):
 
 
 def create_retina_image(item):
-    """Renames our file to specify that it is a Retina image."""
+    """Rename our file to specify that it is a Retina image.
+
+    1. Create new filename.
+    2. Sanitize name.
+    3. Copy file from original.
+    """
     indx = item.index('.')
     newname = item[:indx] + '@2x' + item[indx:]
     newname = sanitize_object_key(newname)
@@ -79,8 +84,20 @@ def create_standard_image(item):
         else:
             raise
     oldname = sanitize_object_key(item)
-    resized_img = resizeimage.resize_width(img, width/2)
+    # resized_img = resizeimage.resize_width(img, width/2)
     print('oldname = ', oldname)
+
+
+def delete_unwanted_lynx_images(item):
+    """Check filename to see if image is Lynx."""
+    indx = item.index('/')
+    filename = item[indx:]
+    filename = item.split('.')[0]
+    if len(filename) < 5:
+        sample = filename[:2]
+        if sample.isdigit():
+            print(item, ' is gonna get deleted.')
+            # client.delete_object(Bucket="hackers", Key=item)
 
 
 def manipulate_objects():
@@ -104,9 +121,10 @@ def manipulate_objects():
                 client.delete_object(Bucket="hackers", Key=item)
             else:
                 if '.' in item:
-                    create_retina_image(item)
-                    create_standard_image(item)
-                    client.delete_object(Bucket="hackers", Key=item)
+                    delete_unwanted_lynx_images(item)
+                    #create_retina_image(item)
+                    #create_standard_image(item)
+                    #client.delete_object(Bucket="hackers", Key=item)
 
 
 manipulate_objects()
